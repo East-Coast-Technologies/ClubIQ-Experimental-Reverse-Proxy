@@ -9,21 +9,21 @@ WORKDIR /app
 
 # Install system dependencies for psycopg2 and others
 RUN apt-get update && apt-get install -y netcat-traditional \
-    build-essential postgresql-client curl \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+  build-essential postgresql-client curl \
+  libpq-dev \
+  && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (for caching)
-COPY Backend/requirements.txt .
+COPY ./requirements.txt .
 
 # Install Python dependencies
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 # Copy app source code
-COPY Backend/ .
+COPY . .
 
 # Copy entrypoint
-COPY Backend/entrypoint.sh /entrypoint.sh
+COPY ./entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 # Expose Flask dev port
