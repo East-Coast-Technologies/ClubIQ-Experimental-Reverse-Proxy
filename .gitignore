@@ -1,5 +1,9 @@
 # Environmental variable
-.env 
+.env
+backend.env
+frontend.env
+backend.env.local
+frontend.env.local 
 
 # Cache
 __pycache__/
@@ -16,7 +20,19 @@ sqlite3.db
 migrations
 instance
 
+# Logs
+logs/
+*.log
+
+# Testing
 .pytest_cache
 node_modules/
 .next/
 club/
+
+# Design files
+*.psd
+*.ai
+*.sketch
+*.pencil
+*.pen

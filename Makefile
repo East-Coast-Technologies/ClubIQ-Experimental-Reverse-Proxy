@@ -4,7 +4,23 @@
 FRONTEND_ID = $(shell docker compose ps -q frontend)
 BACKEND_ID  = $(shell docker compose ps -q backend)
 POSTGRES_ID = $(shell docker compose ps -q postgres)
-PGADMIN_ID = $(shell docker compose ps -q pgadmin)
+NGINX_ID    = $(shell docker compose ps -q nginx)
+
+# Help colors (auto-disabled for non-interactive output or NO_COLOR)
+COLOR_ENABLED = $(shell if [ -t 1 ] && [ -z "$(NO_COLOR)" ]; then echo 1; fi)
+ifeq ($(COLOR_ENABLED),1)
+CLR_RESET  = \033[0m
+CLR_BOLD   = \033[1m
+CLR_CYAN   = \033[36m
+CLR_GREEN  = \033[32m
+CLR_YELLOW = \033[33m
+else
+CLR_RESET  =
+CLR_BOLD   =
+CLR_CYAN   =
+CLR_GREEN  =
+CLR_YELLOW =
+endif
 
 ########## UTIL ##########
 # Ensures the container exists before using it
@@ -17,40 +33,66 @@ endef
 
 # Default target
 help:
-	@echo "|--------------------------------------------------------------------------------------------|"
-	@echo "|-------------------------------ClubIQ Development Environment-------------------------------|"
-	@echo "|--------------------------------------------------------------------------------------------|"
-	@echo "|  make build              - Build and start all containers                                  |"
-	@echo "|  make build-detached     - Build and start all containers in detached mode                 |"
-	@echo "|  make up                 - Rebuilds containers from existing images                        |"
-	@echo "|  make up-detached        - Rebuilds containers from existing images in detached mode       |"
-	@echo "|  make down               - Breaks down existing containers but retains images and volumes  |"
-	@echo "|  make start-all          - Start all containers                                            |"
-	@echo "|  make stop-all           - Stop all containers                                             |"
-	@echo "|  make start-frontend     - Start frontend container                                        |"
-	@echo "|  make stop-frontend      - Stop frontend container                                         |"
-	@echo "|  make start-backend      - Start backend container                                         |"
-	@echo "|  make stop-backend       - Stop backend container                                          |"
-	@echo "|  make start-db           - Start postgres container                                        |"
-	@echo "|  make stop-db            - Stop postgres container                                         |"
-	@echo "|  make recreate-all       - Force rebuild and recreate all containers                       |"
-	@echo "|  make recreate-frontend  - Force rebuild and recreate the frontend container               |"
-	@echo "|  make recreate-backend   - Force rebuild and recreate the backend container                |"
-	@echo "|  make recreate-postgres  - Force rebuild and recreate the postgres container               |"
-	@echo "|  make recreate-pgadmin   - Force rebuild and recreate the pgadmin container                |"
-	@echo "|  make logs-all           - View live logs for all containers                               |"
-	@echo "|  make logs-frontend      - View live logs for frontend container                           |"
-	@echo "|  make logs-backend       - View live logs for backend container                            |"
-	@echo "|  make logs-db            - View live logs for postgres container                           |"
-	@echo "|  make logs-pgadmin       - View live logs for pgadmin container                            |"
-	@echo "|  make shell-frontend     - Open a shell inside the frontend container                      |"
-	@echo "|  make shell-backend      - Open a shell inside the backend container                       |"
-	@echo "|  make shell-db           - Open a shell inside the postgres container                      |"
-	@echo "|  make shell-pgadmin      - Open a shell inside the pgadmin container                       |"
-	@echo "|  make start-pgadmin      - Start pgadmin container                                         |"
-	@echo "|  make stop-pgadmin       - Stop pgadmin container                                          |"
-	@echo "|  make migrate            - Run Flask migrations inside the backend container               |"
-	@echo "|--------------------------------------------------------------------------------------------|"
+	@printf "\n%b\n" "$(CLR_BOLD)ClubIQ Development Environment$(CLR_RESET)"
+	@printf "%b\n\n" "$(CLR_CYAN)===============================$(CLR_RESET)"
+	@printf "%b\n" "$(CLR_GREEN)Usage$(CLR_RESET)"
+	@printf "  make <target>\n\n"
+	@printf "%b\n" "$(CLR_YELLOW)Quick Search$(CLR_RESET)"
+	@printf "  make help | grep -i <keyword>\n"
+	@printf "  make help | grep -Ei 'postgres|nginx'\n\n"
+	@printf "%b\n" "$(CLR_GREEN)Container Setup$(CLR_RESET)"
+	@printf "%b\n" "$(CLR_CYAN)---------------$(CLR_RESET)"
+	@printf "  %-24s %s\n" "build" "Build and start all containers"
+	@printf "  %-24s %s\n" "build-detached" "Build and start all containers in detached mode"
+	@printf "  %-24s %s\n" "up" "Start containers from existing images"
+	@printf "  %-24s %s\n" "up-detached" "Start existing images in detached mode"
+	@printf "\n"
+	@printf "%b\n" "$(CLR_GREEN)Teardown$(CLR_RESET)"
+	@printf "%b\n" "$(CLR_CYAN)--------$(CLR_RESET)"
+	@printf "  %-24s %s\n" "down" "Remove containers and network"
+	@printf "  %-24s %s\n" "down-volumes" "Remove containers, network, and named volumes"
+	@printf "  %-24s %s\n" "down-remove-orphans" "Remove containers and orphaned services"
+	@printf "  %-24s %s\n" "remove-images" "Remove containers and images from the Compose file"
+	@printf "\n"
+	@printf "%b\n" "$(CLR_GREEN)Service Control$(CLR_RESET)"
+	@printf "%b\n" "$(CLR_CYAN)---------------$(CLR_RESET)"
+	@printf "  %-24s %s\n" "start-all" "Start all containers"
+	@printf "  %-24s %s\n" "stop-all" "Stop all containers"
+	@printf "  %-24s %s\n" "start-frontend" "Start the frontend container"
+	@printf "  %-24s %s\n" "stop-frontend" "Stop the frontend container"
+	@printf "  %-24s %s\n" "start-backend" "Start the backend container"
+	@printf "  %-24s %s\n" "stop-backend" "Stop the backend container"
+	@printf "  %-24s %s\n" "start-postgres" "Start the postgres container"
+	@printf "  %-24s %s\n" "stop-postgres" "Stop the postgres container"
+	@printf "  %-24s %s\n" "start-nginx" "Start the nginx container"
+	@printf "  %-24s %s\n" "stop-nginx" "Stop the nginx container"
+	@printf "\n"
+	@printf "%b\n" "$(CLR_GREEN)Recreate$(CLR_RESET)"
+	@printf "%b\n" "$(CLR_CYAN)--------$(CLR_RESET)"
+	@printf "  %-24s %s\n" "recreate-all" "Rebuild local images and recreate all containers"
+	@printf "  %-24s %s\n" "recreate-frontend" "Force rebuild and recreate the frontend container"
+	@printf "  %-24s %s\n" "recreate-backend" "Force rebuild and recreate the backend container"
+	@printf "  %-24s %s\n" "recreate-postgres" "Force recreate the postgres container from its image"
+	@printf "  %-24s %s\n" "recreate-nginx" "Force recreate the nginx container from its image"
+	@printf "\n"
+	@printf "%b\n" "$(CLR_GREEN)Logs$(CLR_RESET)"
+	@printf "%b\n" "$(CLR_CYAN)----$(CLR_RESET)"
+	@printf "  %-24s %s\n" "logs-all" "View live logs for all containers"
+	@printf "  %-24s %s\n" "logs-frontend" "View live logs for the frontend container"
+	@printf "  %-24s %s\n" "logs-backend" "View live logs for the backend container"
+	@printf "  %-24s %s\n" "logs-postgres" "View live logs for the postgres container"
+	@printf "  %-24s %s\n" "logs-nginx" "View live logs for the nginx container"
+	@printf "\n"
+	@printf "%b\n" "$(CLR_GREEN)Shell Access$(CLR_RESET)"
+	@printf "%b\n" "$(CLR_CYAN)------------$(CLR_RESET)"
+	@printf "  %-24s %s\n" "shell-frontend" "Open a shell inside the frontend container"
+	@printf "  %-24s %s\n" "shell-backend" "Open a shell inside the backend container"
+	@printf "  %-24s %s\n" "shell-postgres" "Open a shell inside the postgres container"
+	@printf "  %-24s %s\n" "shell-nginx" "Open a shell inside the nginx container"
+	@printf "\n"
+	@printf "%b\n" "$(CLR_GREEN)Database$(CLR_RESET)"
+	@printf "%b\n" "$(CLR_CYAN)--------$(CLR_RESET)"
+	@printf "  %-24s %s\n\n" "migrate" "Run Flask migrations inside the backend container"
 
 
 
@@ -61,7 +103,7 @@ help:
 
 ########## I. BUILD CONTAINERS IN ATTACHED MODE ##########
 build:
-	@echo "Creating ClubIQ containers...
+	@echo "Creating ClubIQ containers..."
 	docker compose up --build
 
 
@@ -93,8 +135,20 @@ up-detached:
 # REMOVE CONTAINERS AND NETWORKING
 ############################################################
 down:
-	@echo "Breaking down ClubIQ containers..."
+	@echo "Removing ClubIQ containers..."
+	docker compose down
+
+down-volumes:
+	@echo "Removing ClubIQ containers + volumes..."
 	docker compose down --volumes
+
+down-remove-orphans:
+	@echo "Removing unused containers..."
+	docker compose down --remove-orphans
+
+remove-images:
+	@echo "Removing all images from Compose file..."
+	docker compose down --rmi all
 
 
 
@@ -133,23 +187,23 @@ stop-backend:
 
 
 ########## IV. START/STOP POSTGRES CONTAINER ##########
-start-db:
+start-postgres:
 	@echo "Starting postgres..."
-	docker compose up -d db
+	docker compose up -d postgres
 
-stop-db:
+stop-postgres:
 	@echo "Stopping postgres..."
-	docker compose stop db
+	docker compose stop postgres
 
 
-########## V. START/STOP PGADMIN CONTAINER ##########
-start-pgadmin:
-	@echo "Starting pgadmin..."
-	docker compose up -d pgadmin
+########## V. START/STOP NGINX CONTAINER ##########
+start-nginx:
+	@echo "Starting nginx..."
+	docker compose up -d nginx
 
-stop-pgadmin:
-	@echo "Stopping pgadmin..."
-	docker compose stop pgadmin
+stop-nginx:
+	@echo "Stopping nginx..."
+	docker compose stop nginx
 
 
 
@@ -161,10 +215,12 @@ stop-pgadmin:
 recreate-all:
 	@echo "Killing all containers..."
 	docker compose down --volumes
-	@echo "Rebuilding..."
-	docker compose build --no-cache
+	@echo "Rebuilding local images..."
+	docker compose build --no-cache backend frontend
+	@echo "Refreshing pulled images..."
+	docker compose pull postgres nginx
 	@echo "Starting..."
-	docker compose up -d
+	docker compose up -d --force-recreate
 	@echo "All containers recreated!"
 
 
@@ -191,17 +247,17 @@ recreate-postgres:
 	@echo "Recreating postgres..."
 	docker compose stop postgres || true
 	docker compose rm -f postgres || true
-	docker compose build --no-cache postgres
-	docker compose up -d postgres
+	docker compose pull postgres
+	docker compose up -d --force-recreate postgres
 
 
-########## V. RECREATES PGADMIN CONTAINER ##########
-recreate-pgadmin:
-	@echo "Recreating pgadmin..."
-	docker compose stop pgadmin || true
-	docker compose rm -f pgadmin || true
-	docker compose build --no-cache pgadmin
-	docker compose up -d pgadmin
+########## V. RECREATES NGINX CONTAINER ##########
+recreate-nginx:
+	@echo "Recreating nginx..."
+	docker compose stop nginx || true
+	docker compose rm -f nginx || true
+	docker compose pull nginx
+	docker compose up -d --force-recreate nginx
 
 
 
@@ -230,17 +286,17 @@ logs-backend:
 
 
 ########## IV. VIEW LOGS (POSTGRES) ##########
-logs-db:
+logs-postgres:
 	$(call ensure_exists,$(POSTGRES_ID),postgres)
 	@echo "Logs for postgres:"
 	docker logs -f $(POSTGRES_ID)
 
 
-########## V. VIEW LOGS (PGADMIN) ##########
-logs-pgadmin:
-	$(call ensure_exists,$(PGADMIN_ID),pgadmin)
-	@echo "Logs for pgadmin:"
-	docker logs -f $(PGADMIN_ID)
+########## V. VIEW LOGS (NGINX) ##########
+logs-nginx:
+	$(call ensure_exists,$(NGINX_ID),nginx)
+	@echo "Logs for nginx:"
+	docker logs -f $(NGINX_ID)
 
 
 
@@ -263,17 +319,18 @@ shell-backend:
 
 
 ########## III. ENTER POSTGRES CONTAINER ##########
-shell-db:
+shell-postgres:
 	$(call ensure_exists,$(POSTGRES_ID),postgres)
 	@echo "Entering postgres shell..."
 	docker exec -it $(POSTGRES_ID) sh
 
 
-########## IV. ENTER PGADMIN CONTAINER ##########
-shell-pgadmin:
-	$(call ensure_exists,$(PGADMIN_ID),pgadmin)
-	@echo "Entering pgadmin shell..."
-	docker exec -it $(PGADMIN_ID) sh
+########## IV. ENTER NGINX CONTAINER ##########
+shell-nginx:
+	$(call ensure_exists,$(NGINX_ID),nginx)
+	@echo "Entering nginx shell..."
+	docker exec -it $(NGINX_ID) sh
+
 
 
 ############################################################
@@ -292,11 +349,12 @@ migrate:
 
 # Prevents conflicts especially if there's a file with a name similar to one of the targets'
 .PHONY: \
+	help build build-detached up up-detached down down-volumes down-remove-orphans remove-images \
 	logs-all logs-frontend logs-backend logs-postgres \
 	recreate-all recreate-frontend recreate-backend recreate-postgres \
 	start-all stop-all start-frontend stop-frontend start-backend stop-backend \
-	start-db stop-db \
-	sh-frontend sh-backend sh-db \
-	start-pgadmin stop-pgadmin \
-	recreate-pgadmin \
-	logs-pgadmin
+	start-postgres stop-postgres \
+	shell-frontend shell-backend shell-postgres shell-db \
+	start-nginx stop-nginx \
+	recreate-nginx \
+	logs-nginx

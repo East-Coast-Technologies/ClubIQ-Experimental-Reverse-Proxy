@@ -1,40 +1,64 @@
 services:
-  # Services with Dockerfiles
+
+############################################################
+# Services with Dockerfiles
+############################################################
+
   # Backend Service
   backend:
     build: ./Backend
-    container_name: clubiq_backend
+    container_name: clubiq-backend
     restart: unless-stopped
     env_file:
-      - Backend/.env
-    depends_on:
-      - postgres
+      - ./Backend/backend.env
+    command: flask run --host=0.0.0.0 --port=5000
     volumes:
       - ./Backend:/app
-    command: flask run --host=0.0.0.0 --port=5000
     networks:
-      - internal
+      - clubiq-network
+    depends_on:
+      postgres:
+        condition: 
+          service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   # Frontend Service
   frontend:
     build: ./Frontend
-    container_name: clubiq_frontend
+    container_name: clubiq-frontend
     restart: unless-stopped
-    depends_on:
-      - backend
     env_file:
-      - Frontend/.env
+      - ./Frontend/frontend.env
     volumes:
       - ./Frontend:/app
       - /app/node_modules
     networks:
-      - internal
+      - clubiq-network
+    depends_on:
+      backend:
+        condition: 
+          service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --spider http://localhost:3000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
-  # Services with only images
+  
+############################################################
+# Services with only images
+############################################################
+
   # Database
   postgres:
     image: postgres:16
-    container_name: clubiq_db
+    container_name: clubiq-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -43,45 +67,53 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - internal
-
-  # Database Web GUI
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-      SCRIPT_NAME: /pgadmin
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      - postgres
-    networks:
-      - internal
+      - clubiq-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h localhost || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s 
 
   # Reverse Proxy
   nginx:
     image: nginx:alpine
+    container_name: clubiq-nginx
+    restart: unless-stopped
     ports:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
-      - internal
+      - clubiq-network
     depends_on:
-      - frontend
-      - backend
-      - postgres
-      - pgadmin
+      frontend:
+        condition:
+          service_healthy
+      backend:
+        condition:
+          service_healthy
+      postgres:
+        condition: 
+          service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --spider http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
-# Persistent Storage
+
+############################################################
+# Volumes and Networks
+############################################################
+
+# Persistent Volumes
 volumes:
   postgres_data:
   pgadmin_data:
 
 # Internal Docker Network
 networks:
-  internal:
+  clubiq-network:
     driver: bridge
