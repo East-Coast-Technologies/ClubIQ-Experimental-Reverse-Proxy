@@ -18,8 +18,6 @@ class HealthResource(Resource):
 
 api.add_resource(
     HealthResource,
-    "/health",
-    "/health/",
     "/api/health",
     "/api/health/",
 )
