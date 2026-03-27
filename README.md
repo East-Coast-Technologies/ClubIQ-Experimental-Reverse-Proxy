@@ -172,7 +172,7 @@ sudo nix.env -iA nixos.gnumake
 
 # ✅ **Step 4 — Creating the Containers**
 
-View the our [**Docker.md**](./Docker.md) file for the full installation steps.
+View the our [**Docker.md**](./Docs/Docker.md) file for the full installation steps.
 ### Build all services:
 
 ```bash
@@ -200,10 +200,10 @@ If you want to setup the project without using Docker:
 ```bash
 cd Backend
 
-python -m venv venv
+python -m venv .venv
 
 # Activate:
-source venv/bin/activate      # Linux/macOS
+source .venv/bin/activate      # Linux/macOS
 venv\Scripts\activate         # Windows
 
 pip install -r requirements.txt
@@ -262,8 +262,8 @@ The workflow is centered around **cloning main first**.
 > For better practices, **DON'T** clone the repository directly from here...
 
 ```bash
-git clone https://github.com/USIU-ClubIQ/ClubIQ.git
-cd ClubIQ
+git clone git@github.com:East-Coast-Technologies/ClubIQ-Experimental-Reverse-Proxy.git
+cd ClubIQ-Experimental-Reverse-Proxy
 ```
 
 ### **2. Switch to main and pull latest**

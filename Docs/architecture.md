@@ -43,7 +43,7 @@ This document provides a comprehensive overview of the Club IQ system architectu
 ### Root Directory
 - `docker-compose.yml`: Defines the multi-container environment.
 - `Makefile`: Provides shortcuts for common development tasks (build, up, down).
-- `docs/`: System documentation (including this file).
+- `Docs/`: System documentation (including this file).
 - `Backend/`: The Flask REST API service.
 - `Frontend/`: The Next.js frontend application.
 

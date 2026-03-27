@@ -44,13 +44,13 @@ ClubIQ/
 │   ├── app/
 │   │   ├── models.py
 │   │   └── ...
-│   └── .env.example
+│   └── backend.env.example
 │
 ├── Frontend/
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── src/
-│   └── .env.example
+│   └── frontend.env.example
 │ 
 ├── .env.example 
 ├── docker-compose.dev.yml
@@ -67,8 +67,8 @@ Copy and configure the example environment files:
 
 ```bash
 cp .env.example .env
-cp Backend/.env.example Backend/.env
-cp Frontend/.env.example Frontend/.env
+cp Backend/backend.env.example Backend/frontend.env
+cp Frontend/frontend.env.example Frontend/frontend.env
 ```
 
 Then open the three `.env` files and replace values as needed:
@@ -92,6 +92,7 @@ PGADMIN_DEFAULT_PASSWORD=your-pgadmin-password
 # Postgres Credentials
 POSTGRES_USER=your-postgres-username
 POSTGRES_PASSWORD=your-postgres-password
+POSTGRES_DB=your-postgres-database
 
 # Clerk Settings
 CLERK_SECRET_KEY=your-clerk-secret-key
