@@ -89,8 +89,6 @@ services:
         condition: service_healthy
       backend:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --spider http://localhost/health || exit 1"]
       interval: 10s

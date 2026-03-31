@@ -350,11 +350,11 @@ migrate:
 # Prevents conflicts especially if there's a file with a name similar to one of the targets'
 .PHONY: \
 	help build build-detached up up-detached down down-volumes down-remove-orphans remove-images \
-	logs-all logs-frontend logs-backend logs-postgres \
+	logs-all logs-frontend logs-backend logs-postgres logs-nginx \
 	recreate-all recreate-frontend recreate-backend recreate-postgres \
 	start-all stop-all start-frontend stop-frontend start-backend stop-backend \
 	start-postgres stop-postgres \
-	shell-frontend shell-backend shell-postgres shell-db \
+	shell-frontend shell-backend shell-postgres shell-nginx \
 	start-nginx stop-nginx \
 	recreate-nginx \
-	logs-nginx
+	migrate
