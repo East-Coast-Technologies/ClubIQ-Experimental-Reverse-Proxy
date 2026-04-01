@@ -10,8 +10,7 @@ services:
     container_name: clubiq-backend
     restart: unless-stopped
     env_file:
-      - ./Backend/backend.env
-    command: flask run --host=0.0.0.0 --port=5000
+      - ./Backend/backend.env.example
     volumes:
       - ./Backend:/app
     networks:
@@ -32,7 +31,7 @@ services:
     container_name: clubiq-frontend
     restart: unless-stopped
     env_file:
-      - ./Frontend/frontend.env
+      - ./Frontend/frontend.env.example
     volumes:
       - ./Frontend:/app
       - /app/node_modules
@@ -42,7 +41,7 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --spider http://localhost:3000/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health > /dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -90,7 +89,7 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --spider http://localhost/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health > /dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -33,7 +33,7 @@ This document provides a comprehensive overview of the Club IQ system architectu
 
 ### Infrastructure & DevOps
 - **Containerization:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
-- **Database Management:** [pgAdmin](https://www.pgadmin.org/)
+- **Reverse Proxy / Web Server:** [nginx](https://nginx.org/) (acts as a reverse proxy in front of the backend and frontend services)
 - **Build Tool:** `Makefile`
 
 ---
@@ -121,9 +121,10 @@ The system is fully containerized using Docker Compose, consisting of four prima
 
 ### Startup Sequence
 1. `docker-compose up` starts the containers.
-2. The **backend** container's `entrypoint.sh` waits for the **postgres** container to be ready (`nc` check).
+2. The **backend** container's `entrypoint.sh` waits for the **postgres** container to be ready (using `pg_isready`).
 3. `flask db upgrade` is executed automatically to ensure the schema is up to date.
 4. The Flask app is launched using Gunicorn.
+5. The **nginx** container starts as the external reverse proxy entrypoint, routing incoming HTTP requests to the frontend and backend.
 
 ---
 
