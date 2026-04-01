@@ -115,7 +115,7 @@ Since primary user data resides in Clerk, the system implements a **Sync Flow**:
 The system is fully containerized using Docker Compose, consisting of four primary services:
 
 1. **postgres:** The PostgreSQL 16 relational database.
-2. **pgadmin:** Web interface for managing the PostgreSQL database.
+2. **nginx:** Reverse proxy for routing traffic and serving static assets.
 3. **backend:** The Flask application, served by Gunicorn.
 4. **frontend:** The Next.js application, running in development mode (or production build).
 

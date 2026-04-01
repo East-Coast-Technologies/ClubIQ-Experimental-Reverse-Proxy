@@ -26,6 +26,8 @@ logs/
 
 # Testing
 .pytest_cache
+
+# Node.js / Frontend
 node_modules/
 .next/
 club/

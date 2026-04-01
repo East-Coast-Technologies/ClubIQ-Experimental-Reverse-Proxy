@@ -29,7 +29,7 @@ Before running the containers, ensure you have:
 | ------------ | -------------------------------------------------- | ------ |
 | **frontend** | Next.js development server (Clerk auth integrated) | `3000` |
 | **backend**  | Flask API (with SQLAlchemy + migrations)           | `5000` |
-| **db**       | PostgreSQL 16 (persistent volume)                  | `5432` |
+| **postgres** | PostgreSQL 16 (persistent volume)                  | `5432` |
 
 ---
 
@@ -44,16 +44,16 @@ ClubIQ/
 │   ├── app/
 │   │   ├── models.py
 │   │   └── ...
-│   └── .env.example
+│   └── backend.env.example
 │
 ├── Frontend/
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── src/
-│   └── .env.example
+│   └── frontend.env.example
 │ 
 ├── .env.example 
-├── docker-compose.dev.yml
+├── docker-compose.yml
 ├── Makefile
 ├── .dockerignore
 └── Docker.md
@@ -67,8 +67,8 @@ Copy and configure the example environment files:
 
 ```bash
 cp .env.example .env
-cp Backend/.env.example Backend/.env
-cp Frontend/.env.example Frontend/.env
+cp Backend/backend.env.example Backend/backend.env
+cp Frontend/frontend.env.example Frontend/frontend.env
 ```
 
 Then open the three `.env` files and replace values as needed:
@@ -92,6 +92,7 @@ PGADMIN_DEFAULT_PASSWORD=your-pgadmin-password
 # Postgres Credentials
 POSTGRES_USER=your-postgres-username
 POSTGRES_PASSWORD=your-postgres-password
+POSTGRES_DB=your-postgres-database
 
 # Clerk Settings
 CLERK_SECRET_KEY=your-clerk-secret-key
@@ -150,7 +151,7 @@ docker compose exec backend flask db upgrade
 
 | Problem                                         | Fix                                                              |
 | ----------------------------------------------- | ---------------------------------------------------------------- |
-| Containers build but backend crashes on startup | Check `.env` and ensure `DATABASE_URL` matches service name `db` |
+| Containers build but backend crashes on startup | Check `.env` and ensure `DATABASE_URL` matches service name `postgres` |
 | Frontend can’t reach API                        | Confirm `NEXT_PUBLIC_API_URL=http://localhost:5000`              |
 | Migrations not running                          | Run `make migrate` manually inside backend container             |
 | Database persists unwanted data                 | Run `make down` to reset Postgres volume                        |
