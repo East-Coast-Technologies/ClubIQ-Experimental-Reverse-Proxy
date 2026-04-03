@@ -10,7 +10,7 @@ services:
     container_name: clubiq-backend
     restart: unless-stopped
     env_file:
-      - ./Backend/backend.env.example
+      - ./Backend/backend.env
     volumes:
       - ./Backend:/app
     networks:
@@ -31,7 +31,7 @@ services:
     container_name: clubiq-frontend
     restart: unless-stopped
     env_file:
-      - ./Frontend/frontend.env.example
+      - ./Frontend/frontend.env
     volumes:
       - ./Frontend:/app
       - /app/node_modules

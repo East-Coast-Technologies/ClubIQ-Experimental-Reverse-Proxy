@@ -145,4 +145,4 @@ The system is fully containerized using Docker Compose, consisting of four prima
 - **Database Changes:** Always use `flask db migrate` and `flask db upgrade` to manage schema changes.
 - **New Modules:** Follow the existing blueprint structure (`app/module_name/`).
 - **Frontend Components:** Use the components in `src/components/ui/` (Shadcn) for consistent styling.
-- **Security:** Never commit `.env` files. Use `.env.example` as a template for environment variables.
+- **Security:** Never commit `backend.env` or `frontend.env` files. Use `backend.env.example` and `frontend.env.example` as templates for environment variables.
