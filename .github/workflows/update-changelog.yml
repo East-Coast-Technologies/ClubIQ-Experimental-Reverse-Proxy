@@ -1,0 +1,127 @@
+name: Update Changelog
+
+# Fires whenever commits are pushed to any branch that is part of a PR
+# (i.e., any branch that is not the default/protected branch).
+# A [skip changelog] marker in the commit message prevents infinite loops
+# caused by the action's own auto-commit.
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+
+jobs:
+  update-changelog:
+    name: Append commit entries to docs/CHANGELOG.md
+    runs-on: ubuntu-latest
+
+    # Skip runs triggered by the changelog bot's own commit.
+    if: "!contains(github.event.head_commit.message, '[skip changelog]')"
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Use the default GITHUB_TOKEN so the bot can push back to the branch.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Fetch the full history so all commits in the push event are available.
+          fetch-depth: 0
+
+      - name: Initialize changelog file
+        run: |
+          mkdir -p docs
+          if [ ! -f docs/CHANGELOG.md ]; then
+            printf '# Changelog\n\nAll notable changes to this project are documented here.\nEntries are appended automatically by the **Update Changelog** GitHub Action whenever commits are pushed to a pull-request branch.\n\n---\n' \
+              > docs/CHANGELOG.md
+          fi
+
+      - name: Append commit entries
+        env:
+          COMMITS_JSON: ${{ toJSON(github.event.commits) }}
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          import sys
+
+          commits = json.loads(os.environ["COMMITS_JSON"])
+
+          entries = []
+          for commit in commits:
+              sha       = commit["id"]
+              date      = commit["timestamp"]
+              message   = commit["message"].strip()
+              added     = commit.get("added", [])
+              modified  = commit.get("modified", [])
+              removed   = commit.get("removed", [])
+
+              lines = [
+                  f"\n## Commit `{sha}`",
+                  f"**Date:** {date}  ",
+                  f"**Message:** {message}",
+                  "",
+              ]
+
+              if added:
+                  lines.append("**Added:**")
+                  lines.extend(f"- `{f}`" for f in added)
+                  lines.append("")
+
+              if modified:
+                  lines.append("**Modified:**")
+                  lines.extend(f"- `{f}`" for f in modified)
+                  lines.append("")
+
+              if removed:
+                  lines.append("**Removed:**")
+                  lines.extend(f"- `{f}`" for f in removed)
+                  lines.append("")
+
+              entries.append("\n".join(lines))
+
+          if not entries:
+              print("No commits to record.")
+              sys.exit(0)
+
+          with open("docs/CHANGELOG.md") as fh:
+              content = fh.read()
+
+          # Insert new entries directly after the top-level "# Changelog" heading
+          # so the most-recent commits appear near the top.
+          lines = content.splitlines(keepends=True)
+          insert_at = None
+          for i, line in enumerate(lines):
+              if line.startswith("# "):
+                  insert_at = i + 1
+                  break
+
+          # If no heading was found, prepend a heading then insert after it.
+          if insert_at is None:
+              lines = ["# Changelog\n", "\n"] + lines
+              insert_at = 1
+
+          new_block = "".join(entries)
+          new_content = (
+              "".join(lines[:insert_at]) + new_block + "".join(lines[insert_at:])
+          )
+
+          with open("docs/CHANGELOG.md", "w") as fh:
+              fh.write(new_content)
+
+          print(f"Recorded {len(entries)} commit(s) in docs/CHANGELOG.md")
+          EOF
+
+      - name: Commit and push updated changelog
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/CHANGELOG.md
+          if git diff --staged --quiet; then
+            echo "docs/CHANGELOG.md is already up to date – nothing to commit."
+          else
+            git commit -m "chore: update changelog [skip changelog]"
+            git push
+          fi
