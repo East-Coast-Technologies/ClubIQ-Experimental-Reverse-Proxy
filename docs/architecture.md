@@ -1,12 +1,12 @@
-# Club IQ Architecture
+# ClubIQ Architecture
 
-This document provides a comprehensive overview of the Club IQ system architecture, detailing its components, technologies, and interactions.
+This document provides a comprehensive overview of the ClubIQ system architecture, detailing its components, technologies, and interactions.
 
 ---
 
 ## 1. System Overview
 
-**Club IQ** is a full-stack platform designed for club management, including member tracking, activity planning, task assignment, and performance rating. The system is built with a modular architecture, leveraging modern web technologies for scalability and ease of development.
+**ClubIQ** is a full-stack platform designed for club management, including member tracking, activity planning, task assignment, and performance rating. The system is built with a modular architecture, leveraging modern web technologies for scalability and ease of development.
 
 ---
 
