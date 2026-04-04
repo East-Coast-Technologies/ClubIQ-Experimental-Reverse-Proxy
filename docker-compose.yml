@@ -57,6 +57,8 @@ services:
     image: postgres:16
     container_name: clubiq-db
     restart: unless-stopped
+    env_file:
+      - ./Backend/backend.env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
