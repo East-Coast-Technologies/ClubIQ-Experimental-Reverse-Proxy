@@ -4,6 +4,17 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ---
 
+## [22c8397] – 2026-04-05
+
+### fix: remove redundant `COPY` in `Backend/Dockerfile` and update CHANGELOG with all PR commits
+
+- Removed the redundant `COPY entrypoint.sh /entrypoint.sh` instruction from `Backend/Dockerfile`; `COPY . .` already copies `entrypoint.sh` to `/app/entrypoint.sh`, so the `RUN sed` step and `ENTRYPOINT` now reference `/app/entrypoint.sh`.
+- Added changelog entries for all commits pushed to this PR that were not yet documented (`6c95485`, `2d8ccd1`, `4921a5a`, `fdfcf68`, `e6bfeb0`, `3e17eed`, `e3e3f47`).
+
+**Files changed:** `Backend/Dockerfile`, `docs/CHANGELOG.md`
+
+---
+
 ## [e3e3f47] – 2026-04-05
 
 ### docs: clarify instructions for configuring frontend API URL in manual setup
@@ -23,6 +34,20 @@ All notable changes to this project are documented here. Each entry corresponds 
 - Added `/frontend-health` to the Clerk middleware public-routes matcher in `Frontend/src/middleware.ts` so the health endpoint is accessible without authentication.
 
 **Files changed:** `Backend/app/health/routes.py`, `Frontend/src/app/frontend-health/route.ts`, `Frontend/src/middleware.ts`
+
+---
+
+## [62589f9] – 2026-04-05
+
+### feat: add root `.env.example` template and sync Docker/architecture documentation
+
+- Added a root `.env.example` template for Docker Compose `POSTGRES_*` variable interpolation; updated the postgres service `env_file` to reference `.env` and removed the now-redundant inline `environment:` block from `docker-compose.yml`.
+- Rewrote `docs/Docker.md` to match the active four-service topology (`postgres`, `backend`, `frontend`, `nginx`) with only nginx exposed on host port `80`, correct healthcheck endpoints (`/api/backend-health`, `/frontend-health`, `/nginx-health`), and updated setup instructions using `backend.env.example` / `frontend.env.example`.
+- Major sync of `docs/architecture.md`: updated startup sequence (`entrypoint.sh` → `pg_isready` wait → `flask db upgrade` → Gunicorn), network topology, nginx routing flow, and current model/service details.
+- Second-pass sync of `README.md`: updated top-level setup steps, access URLs (via `http://localhost`), and Docker/nginx flow to match the updated documentation.
+- Updated `docs/CHANGELOG.md` to include entries for commits `6c95485`, `2d8ccd1`, `4921a5a`, and `fdfcf68`.
+
+**Files changed:** `.env.example`, `README.md`, `docker-compose.yml`, `docs/Docker.md`, `docs/architecture.md`, `docs/CHANGELOG.md`
 
 ---
 
@@ -82,19 +107,13 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ---
 
-## [Unreleased] – 2026-04-05
+## [8327706] – 2026-04-02
 
-### docs: sync Docker and architecture documentation with current runtime behavior
+### docs: add timestamped CHANGELOG.md to docs directory
 
-- Updated `docs/Docker.md` to match the active `docker-compose.yml` topology: four services (`postgres`, `backend`, `frontend`, `nginx`) with only nginx exposed on host port `80`.
-- Corrected healthcheck documentation to reflect current endpoints: backend `/api/backend-health`, frontend `/frontend-health`, and nginx `/nginx-health`.
-- Updated environment setup instructions to use `Backend/backend.env.example` and `Frontend/frontend.env.example`, and documented the required root `.env` Compose interpolation values for `POSTGRES_*`.
-- Updated access instructions so users open the app via `http://localhost` (nginx) rather than direct backend/frontend host ports.
-- Updated `docs/architecture.md` to match current startup behavior (`entrypoint.sh` -> `pg_isready` wait -> `flask db upgrade` -> Gunicorn), network exposure, routing flow through nginx, and current model/service details.
-- Performed a second-pass onboarding sync in `README.md` so top-level setup, access URLs, and Docker/nginx flow now match the updated documentation.
-- Added a root `.env.example` template and restored documentation for root `.env` Compose interpolation alongside `Backend/backend.env`.
+- Created `docs/CHANGELOG.md` with timestamped entries covering all commits in the PR from `37ae5ea` through `0bfe4f0`, providing a full audit trail of changes.
 
-**Files changed:** `.env.example`, `README.md`, `docs/Docker.md`, `docs/architecture.md`, `docs/CHANGELOG.md`
+**Files changed:** `docs/CHANGELOG.md`
 
 ---
 
