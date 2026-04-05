@@ -187,7 +187,8 @@ npm run dev
 
 Frontend manual default: <http://localhost:3000>
 
-If running both manually (without nginx), set frontend API URL to backend directly.
+If running both manually (without nginx), configure the frontend to point to the backend:
+
 
 ## API Reference
 
