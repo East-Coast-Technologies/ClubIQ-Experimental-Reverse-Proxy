@@ -4,9 +4,25 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ---
 
+## [Unreleased] – 2026-04-05
+
+### docs: sync Docker and architecture documentation with current runtime behavior
+
+- Updated `docs/Docker.md` to match the active `docker-compose.yml` topology: four services (`postgres`, `backend`, `frontend`, `nginx`) with only nginx exposed on host port `80`.
+- Corrected healthcheck documentation to reflect current endpoints: backend `/api/backend-health`, frontend `/frontend-health`, and nginx `/nginx-health`.
+- Updated environment setup instructions to use `Backend/backend.env.example` and `Frontend/frontend.env.example`, and documented the required root `.env` Compose interpolation values for `POSTGRES_*`.
+- Updated access instructions so users open the app via `http://localhost` (nginx) rather than direct backend/frontend host ports.
+- Updated `docs/architecture.md` to match current startup behavior (`entrypoint.sh` -> `pg_isready` wait -> `flask db upgrade` -> Gunicorn), network exposure, routing flow through nginx, and current model/service details.
+- Performed a second-pass onboarding sync in `README.md` so top-level setup, access URLs, and Docker/nginx flow now match the updated documentation.
+- Added a root `.env.example` template and restored documentation for root `.env` Compose interpolation alongside `Backend/backend.env`.
+
+**Files changed:** `.env.example`, `README.md`, `docs/Docker.md`, `docs/architecture.md`, `docs/CHANGELOG.md`
+
+---
+
 ## [0bfe4f0] – 2026-04-01
 
-**revert: restore `wget --spider` in healthchecks per user testing confirmation**
+### revert: restore `wget --spider` in healthchecks per user testing confirmation
 
 - Reverted the frontend and nginx Docker Compose healthcheck probes from `wget -qO-` back to `wget --no-verbose --spider`, which was confirmed to work correctly on both `node:20-alpine` and `nginx:alpine` BusyBox `wget` implementations.
 
@@ -16,7 +32,7 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ## [3caf9a0] – 2026-04-01
 
-**fix: address review comments – healthchecks, env files, entrypoint command, and docs**
+### fix: address review comments – healthchecks, env files, entrypoint command, and docs
 
 - Removed the `command: flask run ...` override from the backend service in `docker-compose.yml` so the entrypoint's Gunicorn invocation is not shadowed.
 - Updated the backend and frontend `env_file` references to point to `backend.env` and `frontend.env` (copied from their respective `.example` files by contributors during setup).
@@ -28,7 +44,7 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ## [e1f6c30] – 2026-04-01
 
-**fix: update `.gitignore` and Docker documentation, correct service names and environment file references**
+### fix: update `.gitignore` and Docker documentation, correct service names and environment file references
 
 - Added `backend.env` and `frontend.env` to `.gitignore` so secrets are not accidentally committed.
 - Updated `docs/Docker.md` to use the correct service names and new environment file names (`backend.env.example` / `frontend.env.example`).
@@ -41,7 +57,7 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ## [78fa49a] – 2026-03-31
 
-**fix: update environment files for Flask and Clerk settings, enhance Makefile and docker-compose health checks**
+### fix: update environment files for Flask and Clerk settings, enhance Makefile and docker-compose health checks
 
 - Added missing `FLASK_APP` and `FLASK_ENV` variables to `Backend/backend.env.example`.
 - Added missing Clerk environment variable placeholders to `Frontend/frontend.env.example`.
@@ -54,7 +70,7 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ## [19226aa] – 2026-03-31
 
-**fix: update Dockerfile and environment files, improve healthcheck endpoints in docker-compose and nginx configuration**
+### fix: update Dockerfile and environment files, improve healthcheck endpoints in docker-compose and nginx configuration
 
 - Renamed `Backend/.env.example` → `Backend/backend.env.example` and `Frontend/.env.example` → `Frontend/frontend.env.example` for clearer distinction between services.
 - Updated `Backend/Dockerfile` to use a relative path for the entrypoint script.
@@ -67,7 +83,7 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ## [763e2de] – 2026-03-24
 
-**fix: resolve nginx unhealthy service status and improve per-service healthcheck JSON responses**
+### fix: resolve nginx unhealthy service status and improve per-service healthcheck JSON responses
 
 - Fixed the Docker Compose `depends_on` condition syntax: changed malformed YAML (empty `condition:` key) to the correct inline form `condition: service_healthy` for backend, frontend, and nginx services.
 - Updated the backend health route (`Backend/app/health/routes.py`) to return a standardized JSON response.
@@ -80,7 +96,7 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ## [5fe5800] – 2026-03-23
 
-**feat: current repo changes – nginx, healthchecks, Makefile overhaul, and Docker improvements**
+### feat: current repo changes – nginx, healthchecks, Makefile overhaul, and Docker improvements
 
 - Added the nginx service to `docker-compose.yml` with its own healthcheck and `depends_on` gating on backend and frontend.
 - Added per-service healthchecks for postgres, backend, and frontend containers.
@@ -101,7 +117,7 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ## [37ae5ea] – 2026-03-13
 
-**feat: add nginx reverse proxy and architecture documentation**
+### feat: add nginx reverse proxy and architecture documentation
 
 - Added `nginx/nginx.conf` configuring nginx as a reverse proxy: routes `/api/` traffic to the Flask backend (port 5000) and all other traffic to the Next.js frontend (port 3000).
 - Updated `docker-compose.yml` to include the nginx service and restructure the network topology so only nginx is exposed on host port 80; backend, frontend, and postgres communicate on the internal `clubiq-network`.

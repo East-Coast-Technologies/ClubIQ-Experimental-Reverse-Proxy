@@ -8,11 +8,19 @@ This document provides a comprehensive overview of the ClubIQ system architectur
 
 **ClubIQ** is a full-stack platform designed for club management, including member tracking, activity planning, task assignment, and performance rating. The system is built with a modular architecture, leveraging modern web technologies for scalability and ease of development.
 
+At runtime in Docker Compose, the system is organized as four services connected on an internal bridge network:
+
+- postgres (data store)
+- backend (Flask API on Gunicorn)
+- frontend (Next.js App Router application)
+- nginx (single external entrypoint)
+
 ---
 
 ## 2. Tech Stack
 
 ### Backend
+
 - **Framework:** [Flask](https://flask.palletsprojects.com/) (Python 3.12)
 - **API Style:** RESTful (using `flask-restful`)
 - **Database:** [PostgreSQL](https://www.postgresql.org/)
@@ -21,9 +29,10 @@ This document provides a comprehensive overview of the ClubIQ system architectur
 - **Authentication:** [Clerk](https://clerk.com/) (JWT-based)
 - **Task Scheduling:** `flask-apscheduler`
 - **Mail:** `flask-mail`
-- **WSGI Server:** [Gunicorn](https://gunicorn.org/)
+- **WSGI Server:** [Gunicorn](https://gunicorn.org/) (`wsgi:app`, configured in `gunicorn_config.py`)
 
 ### Frontend
+
 - **Framework:** [Next.js](https://nextjs.org/) (App Router, React 19)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components:** [Radix UI](https://www.radix-ui.com/) / [Shadcn UI](https://ui.shadcn.com/)
@@ -32,8 +41,9 @@ This document provides a comprehensive overview of the ClubIQ system architectur
 - **Icons:** [Lucide React](https://lucide.dev/)
 
 ### Infrastructure & DevOps
+
 - **Containerization:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
-- **Reverse Proxy / Web Server:** [nginx](https://nginx.org/) (acts as a reverse proxy in front of the backend and frontend services)
+- **Reverse Proxy / Web Server:** [nginx](https://nginx.org/) (host port `80`, reverse proxy in front of backend and frontend)
 - **Build Tool:** `Makefile`
 
 ---
@@ -41,16 +51,19 @@ This document provides a comprehensive overview of the ClubIQ system architectur
 ## 3. Project Structure
 
 ### Root Directory
+
 - `docker-compose.yml`: Defines the multi-container environment.
 - `Makefile`: Provides shortcuts for common development tasks (build, up, down).
 - `docs/`: System documentation (including this file).
 - `Backend/`: The Flask REST API service.
 - `Frontend/`: The Next.js frontend application.
+- `nginx/`: Reverse proxy configuration.
 
 ### Backend Structure (`/Backend`)
+
 - `app/`: Main application package.
   - `activities/`, `auth/`, `clubs/`, `invitations/`, `members/`, `rating/`: Modular blueprints/resources.
-  - `health/`: Health check endpoints for monitoring.
+  - `health/`: Health check resource (`/api/backend-health`).
   - `models.py`: Database schema definitions using SQLAlchemy.
   - `__init__.py`: App factory and extension initialization.
 - `migrations/`: Database migration scripts.
@@ -61,10 +74,12 @@ This document provides a comprehensive overview of the ClubIQ system architectur
 - `entrypoint.sh`: Startup script for the Docker container.
 
 ### Frontend Structure (`/Frontend`)
+
 - `src/app/`: Next.js App Router pages and layouts.
   - `admin/`: Admin-specific dashboards and management views.
   - `member/`: Member-specific views and tasks.
   - `auth/`: Authentication pages (Sign-in, Sign-up).
+  - `frontend-health/route.tsx`: Frontend health route (`/frontend-health`).
 - `src/components/`: Reusable React components.
   - `admin/`, `member/`, `reusables/`, `ui/`: Component categorization.
 - `src/context/`: React Context providers (e.g., `AppContext`).
@@ -87,26 +102,41 @@ The system uses a relational schema managed by PostgreSQL:
 - **Rating:** Performance evaluations for Users on specific Tasks.
 - **Invitation:** Tracks invitations sent to potential members to join a club.
 
+Notable model details from the current schema:
+
+- Club, Activity, Task, Rating, and Invitation IDs are UUIDs.
+- User IDs are integer primary keys.
+- Task status enum values: `pending`, `in_progress`, `completed`.
+- Invitation status enum values: `pending`, `in_progress`, `accepted`.
+
 ---
 
 ## 5. Authentication & Security
 
 ### Clerk Integration
+
 The platform offloads identity management to [Clerk](https://clerk.com/).
+
 - **Frontend:** Uses Clerk's Next.js SDK to handle sessions, sign-ins, and protected routes via `clerkMiddleware`.
 - **Backend:** Validates Clerk-issued JWTs locally using **JWKS (JSON Web Key Sets)**. This "networkless" verification ensures high performance and security.
 
 ### Authorization Decorators
+
 The backend implements a custom `@auth_required` decorator:
+
 - Verifies the JWT signature.
 - Maps the `clerk_id` (from the JWT `sub` claim) to the internal `User` ID.
 - Enforces role-based access control (RBAC).
 
 ### User Synchronization
+
 Since primary user data resides in Clerk, the system implements a **Sync Flow**:
+
 1. User logs into the Frontend via Clerk.
 2. Frontend calls `POST /api/auth/sync/` with the JWT.
 3. Backend extracts user details from JWT claims and ensures a corresponding record exists in the local PostgreSQL database.
+
+The backend also exposes `GET /api/auth/test/` for auth verification and `GET /api/auth/me/<user_id>/` for profile retrieval.
 
 ---
 
@@ -114,29 +144,40 @@ Since primary user data resides in Clerk, the system implements a **Sync Flow**:
 
 The system is fully containerized using Docker Compose, consisting of four primary services:
 
-1. **postgres:** The PostgreSQL 16 relational database.
-2. **nginx:** Reverse proxy for routing traffic and serving static assets.
-3. **backend:** The Flask application, served by Gunicorn.
-4. **frontend:** The Next.js application, running in development mode (or production build).
+1. **postgres:** PostgreSQL 16 with named volume `postgres-data`.
+2. **backend:** Flask container built from `Backend/Dockerfile`, started through `Backend/entrypoint.sh`, served by Gunicorn on port 5000.
+3. **frontend:** Next.js container built from `Frontend/Dockerfile`, running `npm run dev` on port 3000.
+4. **nginx:** Reverse proxy container (`nginx:alpine`) exposed on host port 80.
+
+Only nginx is exposed to the host. Backend, frontend, and postgres are internal to `clubiq-network`.
 
 ### Startup Sequence
+
 1. `docker-compose up` starts the containers.
 2. The **backend** container's `entrypoint.sh` waits for the **postgres** container to be ready (using `pg_isready`).
 3. `flask db upgrade` is executed automatically to ensure the schema is up to date.
 4. The Flask app is launched using Gunicorn.
-5. The **nginx** container starts as the external reverse proxy entrypoint, routing incoming HTTP requests to the frontend and backend.
+5. The **frontend** service starts once backend is healthy.
+6. The **nginx** service starts after backend and frontend become healthy.
+
+Current healthcheck endpoints:
+
+- Backend: `/api/backend-health`
+- Frontend: `/frontend-health`
+- Nginx: `/nginx-health`
 
 ---
 
 ## 7. Data Flow
 
 ### API Request Lifecycle
-1. **Frontend:** React component initiates a `fetch` request with a Clerk JWT in the `Authorization` header.
-2. **Backend (Middleware):** CORS headers are processed.
-3. **Backend (Decorator):** `@auth_required` validates the JWT.
-4. **Backend (Controller):** The resource logic executes, interacting with the database via SQLAlchemy.
-5. **Backend (Response):** Returns JSON data to the frontend.
-6. **Frontend:** Updates UI state (via TanStack Query or local state) to reflect the changes.
+
+1. Browser sends request to nginx (`http://localhost`).
+2. Nginx routes `/api/*` to backend (`backend:5000`) and other paths to frontend (`frontend:3000`).
+3. Frontend sends API requests (typically with Clerk JWT in `Authorization`).
+4. Backend processes CORS, auth decorators, and resource handlers.
+5. SQLAlchemy reads/writes PostgreSQL.
+6. Backend returns JSON; frontend updates UI state.
 
 ---
 
@@ -146,3 +187,12 @@ The system is fully containerized using Docker Compose, consisting of four prima
 - **New Modules:** Follow the existing blueprint structure (`app/module_name/`).
 - **Frontend Components:** Use the components in `src/components/ui/` (Shadcn) for consistent styling.
 - **Security:** Never commit `backend.env` or `frontend.env` files. Use `backend.env.example` and `frontend.env.example` as templates for environment variables.
+
+---
+
+## 9. Operational Notes
+
+- Backend and frontend source directories are bind-mounted in Docker Compose for iterative development.
+- PostgreSQL data is persisted in the named volume `postgres-data`.
+- Compose uses `depends_on` with `condition: service_healthy` to gate startup order.
+- Root `.env` provides Compose interpolation for database credentials, and `Backend/backend.env` keeps the container runtime values aligned.

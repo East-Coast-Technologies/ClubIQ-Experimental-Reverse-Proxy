@@ -1,114 +1,94 @@
-# **Club IQ**
+# ClubIQ
 
-<p align='center'>
-<img src="https://img.shields.io/badge/Python-3.10+-blue?logo=python">
-<img src="https://img.shields.io/badge/Flask-Backend-black?logo=flask">
-<img src="https://img.shields.io/badge/Next.js-Frontend-black?logo=nextdotjs">
-<img src="https://img.shields.io/badge/PostgreSQL-Database-336791?logo=postgresql">
-<img src="https://img.shields.io/badge/Docker-Containerized-blue?logo=docker">
-<img src="https://img.shields.io/badge/Clerk-Authentication-4F46E5?logo=clerk">
-<img src="https://img.shields.io/badge/License-MIT-green">
-<img src="https://img.shields.io/badge/Maintained-Yes-brightgreen.svg">
-<img src="https://img.shields.io/github/contributors/tomi3-11/ClubIQ">
-</p>
+![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python)
+![Flask](https://img.shields.io/badge/Flask-Backend-black?logo=flask)
+![Next.js](https://img.shields.io/badge/Next.js-Frontend-black?logo=nextdotjs)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?logo=postgresql)
+![Docker](https://img.shields.io/badge/Docker-Containerized-blue?logo=docker)
+![Clerk](https://img.shields.io/badge/Clerk-Authentication-4F46E5?logo=clerk)
 
+## Overview
 
-
----
-
-# **Overview**
-
-**Club IQS** is a full-stack platform for managing clubs: members, events, attendance, authentication, and more.
+ClubIQ is a full-stack platform for managing clubs, activities, members, invitations, and ratings.
 
 It includes:
 
-* **Flask REST API**
-* **Next.js frontend**
-* **PostgreSQL** relational DB
-* Full **Docker** environment
-* **Clerk** authentication
-* **Scalable architecture** for real-world clubs and organizations
+- Flask REST API backend
+- Next.js frontend (App Router)
+- PostgreSQL database
+- Docker Compose local environment
+- nginx reverse proxy for unified local access
+- Clerk-based authentication
 
----
-
-# **Table of Contents**
+## Table of Contents
 
 1. [Project Structure](#project-structure)
-2. [Setup & Installation](#setup--installation)
-3. [Backend Guide](#backend-setup)
-4. [Frontend Guide](#frontend-setup)
-5. [API Reference](#api-reference)
-6. [Testing](#testing)
-7. [Contribution Guide](#contribution-guide)
-8. [License](#license)
+1. [Setup and Installation](#setup-and-installation)
+1. [Docker Quick Start](#docker-quick-start)
+1. [Manual Setup](#manual-setup)
+1. [API Reference](#api-reference)
+1. [Testing](#testing)
+1. [Contribution Guide](#contribution-guide)
+1. [License](#license)
 
----
+## Project Structure
 
-# **Project Structure**
-
-```
+```text
 ClubIQ/
-│── Backend/
-│   ├── app/
-│   ├── instance/
-│   ├── Config.py
-│   ├── requirements.txt
-│
-│── Frontend/
-│   ├── app/
-│   ├── package.json
-│   ├── next.config.mjs
-│
-│── docker-compose.yml
-│── Makefile
-│── README.md
-│── .gitignore
+|-- .env.example
+|-- Backend/
+|   |-- app/
+|   |-- config.py
+|   |-- requirements.txt
+|   |-- backend.env.example
+|   `-- entrypoint.sh
+|-- Frontend/
+|   |-- src/
+|   |-- package.json
+|   `-- frontend.env.example
+|-- docs/
+|   |-- Docker.md
+|   `-- architecture.md
+|-- nginx/
+|   `-- nginx.conf
+|-- docker-compose.yml
+|-- Makefile
+|-- README.md
+`-- .gitignore
 ```
 
----
+## Setup and Installation
 
-# **Setup & Installation**
+Works on Linux, macOS, and Windows.
 
-Works on **Windows**, and **Linux**.
-Follow the steps as listed — skipping ahead is how people summon bugs from the abyss.
+### Step 1: Install Docker
 
----
+Install Docker and Docker Compose.
 
-# ✅ **Step 1 — Install Docker**
-We recommend installing **Docker Desktop** as it not only installs Docker Desktop but also the **Docker Engine, Docker CLI, and Docker Compose.**
+- Docker Desktop: <https://www.docker.com/products/docker-desktop/>
+- Linux Engine + Compose plugin are also supported.
 
-Download: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+Ensure the Docker daemon is running before using `docker compose` or `make` targets.
 
-During installation:
+### Step 2 (Windows Recommended): Setup Node in WSL with NVM
 
-* Enable **Hyper-V / Virtualization**
-* Enable **WSL2** backend
+If you are developing on Windows, use WSL for the Node toolchain.
 
-After installation, make sure the **Docker Daemon / docker.service** is running in the background otherwise **none** of the make or docker commands will work.
-
-**Note: Using Docker Desktop / Podman Desktop is completely optional but is recommended since it makes it easy to manage your containers.**
-
----
-
-# ✅ **Step 2 — (Recommended) Setup Node in WSL using NVM**
-
-On Windows, use **WSL** for Node development or you’ll meet npm’s mood swings.
-
-### Install NVM
+Install NVM:
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 source ~/.bashrc
 ```
 
-### Install Node (LTS)
+Install Node LTS:
 
 ```bash
 nvm install --lts
 nvm use --lts
 ```
 
-### Verify WSL paths
+Verify:
 
 ```bash
 which node
@@ -117,169 +97,157 @@ node -v
 npm -v
 ```
 
-Paths must **not** point to Windows directories.
+### Step 3: Install Make (Optional)
 
----
+`make` is optional but recommended for common Docker workflows.
 
-# ✅ **Step 3 — Install Make**
-
-The Makefile wraps common Docker commands. The utility is part of **GnuMake** so don't get alarmed if you don't see make by itself.
-
-## Windows
-
-Download and install the make utility from: [SourceForge](https://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81.exe/download?use_mirror=yer&download)
-
-Add to PATH, then verify:
-
-```bash
-make --version
-```
-
-## Linux / macOS
-
-Install the make utility via your distro's package manager. For instance:
-
-* macOS:
+- macOS:
 
 ```bash
 brew install make
 ```
 
-* Debian / Ubuntu:
+- Debian/Ubuntu:
 
 ```bash
 sudo apt install make
 ```
 
-* Fedora:
+- Fedora:
 
 ```bash
 sudo dnf install make
 ```
 
-* Arch Linux:
+- Arch:
 
 ```bash
 sudo pacman -S make
 ```
 
-* NixOS:
+## Docker Quick Start
+
+See [docs/Docker.md](docs/Docker.md) for detailed Docker usage.
+
+1. Create service env files from templates:
 
 ```bash
-sudo nix.env -iA nixos.gnumake
+cp .env.example .env
+cp Backend/backend.env.example Backend/backend.env
+cp Frontend/frontend.env.example Frontend/frontend.env
 ```
----
 
-# ✅ **Step 4 — Creating the Containers**
+1. Set `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` in both `.env` and `Backend/backend.env` so Compose interpolation and container runtime use the same database credentials.
 
-View the our [**Docker.md**](./Docker.md) file for the full installation steps.
-### Build all services:
+1. Build and start services:
 
 ```bash
 make build
 ```
 
-### Run containers (attached):
+1. Open the app at <http://localhost>.
+
+Current Docker access model:
+
+- `nginx` is the only host-exposed service (port `80`).
+- `backend` and `frontend` are internal services behind nginx.
+- `/api/*` routes to backend, all other routes route to frontend.
+
+Useful commands:
 
 ```bash
 make up
-```
-
-### Detached mode:
-
-```bash
 make up-detached
+make logs-all
+make down
+make help
 ```
 
----
+## Manual Setup
 
-# ✅ **Manual Setup**
-
-If you want to setup the project without using Docker:
+### Backend (without Docker)
 
 ```bash
 cd Backend
-
 python -m venv venv
-
-# Activate:
-source venv/bin/activate      # Linux/macOS
-venv\Scripts\activate         # Windows
-
+source venv/bin/activate  # Linux/macOS
 pip install -r requirements.txt
-
 flask run
 ```
 
-Environment variables live in `instance/.env`.
+Backend manual default: <http://localhost:5000>
 
----
-
-# ✅ **Frontend Setup (Next.js)**
+### Frontend (without Docker)
 
 ```bash
 cd Frontend
-
 npm install
 npm run dev
 ```
 
-Frontend runs on:
+Frontend manual default: <http://localhost:3000>
 
-[http://localhost:3000](http://localhost:3000)
+If running both manually (without nginx), set frontend API URL to backend directly.
 
----
+## API Reference
 
-# **API Reference**
+Base URLs:
 
-### Base URLs
+- Docker (through nginx): `http://localhost/api`
+- Manual local (no nginx): `http://localhost:5000/api`
+- Production: `https://yourdomain.com/api`
 
-* Dev: `http://localhost:5000/api`
-* Prod: `https://yourdomain.com/api`
+In Docker mode, keep `.env` and `Backend/backend.env` aligned: root `.env` feeds Compose interpolation and `Backend/backend.env` provides the container env values.
 
----
+Endpoint documentation:
 
-### Endpoint Documentation. All blueprints for backend
+- [Authentication](Backend/endpoint_documentation/authentication.md)
+- [Clubs](Backend/endpoint_documentation/clubs.md)
+- [Members](Backend/endpoint_documentation/members.md)
+- [Activities](Backend/endpoint_documentation/activities.md)
+- [Rating](Backend/endpoint_documentation/ratings.md)
+- [Invitations](Backend/endpoint_documentation/invitations.md)
 
-- [Authentication](./Backend/endpoint_documentation/authentication.md)
-- [Clubs](./Backend/endpoint_documentation/clubs.md)
-- [Members](./Backend/endpoint_documentation/members.md)
-- [Activities](./Backend/endpoint_documentation/activities.md)
-- [Rating](./Backend/endpoint_documentation/ratings.md)
-- [Invitation](./Backend/endpoint_documentation/invitations.md)
+## Testing
 
+Backend tests:
 
+```bash
+cd Backend
+pytest
+```
 
-# **Contribution Guide**
+Or in Docker:
 
-The workflow is centered around **cloning main first**.
----
+```bash
+docker compose exec backend pytest
+```
 
-## **Developer Workflow (Contributor-First)**
+## Contribution Guide
 
-### **1. Fork the repository**
-> **NOTE** : __Fork the repository then clone it from your side__. <br>
-> For better practices, **DON'T** clone the repository directly from here...
+Workflow:
+
+1. Fork and clone.
 
 ```bash
 git clone https://github.com/USIU-ClubIQ/ClubIQ.git
 cd ClubIQ
 ```
 
-### **2. Switch to main and pull latest**
+1. Switch to `main` and pull latest.
 
 ```bash
 git checkout main
 git pull origin main
 ```
 
-### **3. Create a feature branch**
+1. Create a feature branch.
 
 ```bash
 git checkout -b feature/<task-name>
 ```
 
-### **4. Work → Commit → Push**
+1. Work, commit, and push.
 
 ```bash
 git add .
@@ -287,14 +255,8 @@ git commit -m "Implement <feature>"
 git push origin feature/<task-name>
 ```
 
-### **5. Open a Pull Request**
+1. Open a pull request from `feature/<task-name>` to `main`.
 
-* PR from your `feature/<task-name>` → `main`
-* Add a short description
-* Assign team lead
-
----
-
-# **License**
+## License
 
 MIT License.

@@ -1,69 +1,64 @@
-# 🐳 **ClubIQ Docker Guide**
+# ClubIQ Docker Guide
 
 ## Overview
 
-This document explains how to build and run the **ClubIQ** Club Management System locally using Docker.
-It includes the **Flask backend**, **Next.js frontend**, and **PostgreSQL database**.
+This document explains how to run ClubIQ locally with Docker Compose.
 
-The setup automatically handles:
+The current stack runs four services:
 
-* Database initialization and migrations
-* Hot reloading for both backend and frontend
-* Persistent Postgres storage
+- postgres (PostgreSQL 16)
+- backend (Flask + Gunicorn)
+- frontend (Next.js dev server)
+- nginx (reverse proxy exposed on host port 80)
+
+The backend container waits for PostgreSQL readiness with pg_isready, then runs flask db upgrade during startup.
 
 ---
 
 ## 1. Prerequisites
 
-Before running the containers, ensure you have:
+Before running containers, install:
 
-* **Docker** ≥ 20.x
-* **Docker Compose** plugin ≥ v2.0
-* **Make** (optional, for easier commands)
-
----
-
-## 2. Project Services
-
-| Service      | Description                                        | Port   |
-| ------------ | -------------------------------------------------- | ------ |
-| **frontend** | Next.js development server (Clerk auth integrated) | `3000` |
-| **backend**  | Flask API (with SQLAlchemy + migrations)           | `5000` |
-| **postgres** | PostgreSQL 16 (persistent volume)                  | `5432` |
+- Docker 20+
+- Docker Compose v2+
+- Make (optional, recommended)
 
 ---
 
-## 3. Directory Layout
+## 2. Service Topology
 
-```bash
-ClubIQ/
-├── Backend/
-│   ├── Dockerfile
-│   ├── entrypoint.sh
-│   ├── requirements.txt
-│   ├── app/
-│   │   ├── models.py
-│   │   └── ...
-│   └── backend.env.example
-│
-├── Frontend/
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── src/
-│   └── frontend.env.example
-│ 
-├── .env.example 
-├── docker-compose.yml
-├── Makefile
-├── .dockerignore
-└── Docker.md
-```
+| Service | Role | Internal Port | Host Port |
+| --- | --- | --- | --- |
+| nginx | Reverse proxy entrypoint | 80 | 80 |
+| frontend | Next.js app (dev mode) | 3000 | not exposed directly |
+| backend | Flask API via Gunicorn | 5000 | not exposed directly |
+| postgres | PostgreSQL database | 5432 | not exposed directly |
+
+Important:
+
+- Access the app through <http://localhost> (nginx).
+- The backend and frontend are reached through nginx routing:
+  - /api/* -> backend
+  - all other routes -> frontend
+
+---
+
+## 3. Health Checks
+
+Current Compose healthcheck endpoints:
+
+- backend: <http://localhost:5000/api/backend-health>
+- frontend: <http://localhost:3000/frontend-health>
+- nginx: <http://localhost/nginx-health>
+- postgres: pg_isready
+
+Service startup is gated with depends_on condition: service_healthy.
 
 ---
 
 ## 4. Environment Setup
 
-Copy and configure the example environment files:
+Copy service environment templates:
 
 ```bash
 cp .env.example .env
@@ -71,63 +66,48 @@ cp Backend/backend.env.example Backend/backend.env
 cp Frontend/frontend.env.example Frontend/frontend.env
 ```
 
-Then open the three `.env` files and replace values as needed:
+Root `.env` is required for Docker Compose interpolation. Keep the database values in `.env` aligned with `Backend/backend.env`.
 
-**ClubIQ/.env**
+Set your database credentials in both `.env` and `Backend/backend.env`:
 
-```bash
-# Postgres Credentials
-POSTGRES_USER=your-postgres-username
-POSTGRES_PASSWORD=your-postgres-password
-POSTGRES_DB=your-postgres-database
+- POSTGRES_USER
+- POSTGRES_PASSWORD
+- POSTGRES_DB
 
-# PgAdmin Credentials
-PGADMIN_DEFAULT_EMAIL=your-pgadmin-email
-PGADMIN_DEFAULT_PASSWORD=your-pgadmin-password
-```
+Minimum backend variables you should set:
 
-**Backend/.env**
+- POSTGRES_USER
+- POSTGRES_PASSWORD
+- POSTGRES_DB
+- CLERK_SECRET_KEY
 
-```bash
-# Postgres Credentials
-POSTGRES_USER=your-postgres-username
-POSTGRES_PASSWORD=your-postgres-password
-POSTGRES_DB=your-postgres-database
+Minimum frontend variables you should set:
 
-# Clerk Settings
-CLERK_SECRET_KEY=your-clerk-secret-key
-```
-
-**Frontend/.env**
-
-```bash
-# Clerk Settings
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your-clerk-publishable-key
-CLERK_SECRET_KEY=your-clerk-secret-key
-```
+- NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+- CLERK_SECRET_KEY
 
 ---
 
-## 5. Build & Run
+## 5. Build and Run
 
-Run all containers with:
+With Make:
 
 ```bash
 make build
 ```
 
-This automatically:
+Without Make:
 
-* Builds all images
-* Initializes and migrates the database
-* Launches the Flask + Next.js servers
+```bash
+docker compose up --build
+```
 
-Visit your app at:
+Open:
 
-* **Frontend:** [http://localhost:3000](http://localhost:3000)
-* **Backend API:** [http://localhost:5000](http://localhost:5000)
+- App: <http://localhost>
+- Nginx health: <http://localhost/nginx-health>
 
-To view the full list of commands provided through the Make file, run:
+For command discovery:
 
 ```bash
 make help
@@ -135,25 +115,33 @@ make help
 
 ---
 
-## 6. Manual Docker Commands
-
-If you don’t have `make` installed:
+## 6. Common Commands
 
 ```bash
-docker compose up --build
-docker compose down
+make up-detached
+make logs-all
+make logs-backend
+make logs-frontend
+make logs-nginx
+make down
+make down-volumes
+```
+
+Manual migration command:
+
+```bash
+docker compose exec backend flask db migrate -m "auto migration"
 docker compose exec backend flask db upgrade
 ```
 
 ---
 
-## 7. Possible Issues
+## 7. Troubleshooting
 
-| Problem                                         | Fix                                                              |
-| ----------------------------------------------- | ---------------------------------------------------------------- |
-| Containers build but backend crashes on startup | Check `.env` and ensure `DATABASE_URL` matches service name `postgres` |
-| Frontend can’t reach API                        | Confirm `NEXT_PUBLIC_API_URL=http://localhost:5000`              |
-| Migrations not running                          | Run `make migrate` manually inside backend container             |
-| Database persists unwanted data                 | Run `make down` to reset Postgres volume                        |
-
----
+| Problem | Fix |
+| --- | --- |
+| Compose warns that POSTGRES_* are unset | Ensure `.env` exists at the repo root and `Backend/backend.env` includes POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB |
+| Backend fails DB connection | Ensure DATABASE_URL in Backend/backend.env points to host postgres on port 5432 |
+| App loads but API calls fail | Set NEXT_PUBLIC_API_URL to <http://localhost/api> in Frontend/frontend.env |
+| Healthchecks fail | Verify endpoints are /api/backend-health, /frontend-health, and /nginx-health |
+| Need clean database state | Run make down-volumes |
