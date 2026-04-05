@@ -4,6 +4,21 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ---
 
+## [c272272] – 2026-04-05
+
+### docs: second-pass CHANGELOG verification – fix ordering, add missing entries
+
+- Fixed `[Unreleased]` label → replaced with correct commit hash `[62589f9]` and added `docker-compose.yml` to its files list.
+- Restored the `[0bfe4f0]` entry that was accidentally dropped in a previous edit.
+- Added missing `[8327706] – 2026-04-02` entry (commit that originally created `docs/CHANGELOG.md`).
+- Added missing `[22c8397] – 2026-04-05` entry (Dockerfile fix + prior CHANGELOG update).
+- Corrected `[62589f9]` position to maintain strict newest-first chronological order.
+- Removed a duplicate `[e6bfeb0]` entry that had crept in.
+
+**Files changed:** `docs/CHANGELOG.md`
+
+---
+
 ## [22c8397] – 2026-04-05
 
 ### fix: remove redundant `COPY` in `Backend/Dockerfile` and update CHANGELOG with all PR commits
