@@ -4,6 +4,84 @@ All notable changes to this project are documented here. Each entry corresponds 
 
 ---
 
+## [e3e3f47] – 2026-04-05
+
+### docs: clarify instructions for configuring frontend API URL in manual setup
+
+- Improved wording in `README.md` for the manual (non-Docker) setup section: clarified how to configure the frontend to point to the backend when running both services without nginx.
+
+**Files changed:** `README.md`
+
+---
+
+## [3e17eed] – 2026-04-05
+
+### fix: correct backend and frontend health check endpoint paths
+
+- Fixed leading-slash omission in `Backend/app/health/routes.py` route registrations (`backend-health` → `/backend-health`).
+- Renamed `Frontend/src/app/frontend-health/route.tsx` → `route.ts` (no JSX used in the handler).
+- Added `/frontend-health` to the Clerk middleware public-routes matcher in `Frontend/src/middleware.ts` so the health endpoint is accessible without authentication.
+
+**Files changed:** `Backend/app/health/routes.py`, `Frontend/src/app/frontend-health/route.ts`, `Frontend/src/middleware.ts`
+
+---
+
+## [e6bfeb0] – 2026-04-05
+
+### feat: rename health check endpoints and migrate nginx probe to `/nginx-health`
+
+- Renamed backend health route from `/api/health` to `/api/backend-health` (and `/backend-health`) in `Backend/app/health/routes.py`.
+- Moved frontend health route from `Frontend/src/app/health/` to `Frontend/src/app/frontend-health/` to avoid colliding with nginx's probe path.
+- Updated all three `docker-compose.yml` healthcheck probes: backend now targets `/api/backend-health`, frontend targets `/frontend-health`, and nginx targets `/nginx-health`.
+- Renamed the nginx health location block from `/health` to `/nginx-health` in `nginx/nginx.conf` and added `proxy_http_version 1.1` to the `/api/` proxy location.
+
+**Files changed:** `Backend/app/health/routes.py`, `Frontend/src/app/frontend-health/route.tsx`, `docker-compose.yml`, `nginx/nginx.conf`
+
+---
+
+## [fdfcf68] – 2026-04-04
+
+### chore: remove root `.env.example` and wire postgres service to `backend.env`
+
+- Deleted the stale root `.env.example` file (superseded by `Backend/backend.env.example`).
+- Added `env_file: ./Backend/backend.env` to the `postgres` service in `docker-compose.yml` so `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are sourced from the same file as the backend, removing the need for a separate root `.env`.
+
+**Files changed:** `.env.example`, `docker-compose.yml`
+
+---
+
+## [4921a5a] – 2026-04-04
+
+### fix: add `-d "$POSTGRES_DB"` to `pg_isready` in entrypoint
+
+- Updated `Backend/entrypoint.sh` to pass `-d "$POSTGRES_DB"` to `pg_isready`, ensuring the readiness check targets the actual application database rather than defaulting to a database matching the username.
+
+**Files changed:** `Backend/entrypoint.sh`
+
+---
+
+## [2d8ccd1] – 2026-04-04
+
+### docs: standardize product name to "ClubIQ" in architecture documentation
+
+- Replaced all occurrences of "Club IQ" (with a space) with "ClubIQ" in `docs/architecture.md` title, introduction, and system overview for consistent branding.
+
+**Files changed:** `docs/architecture.md`
+
+---
+
+## [6c95485] – 2026-04-03
+
+### fix: update environment file references in docker-compose and nginx upstream usage
+
+- Updated `docker-compose.yml` `env_file` entries for backend and frontend to point at the real per-developer env files (`backend.env` / `frontend.env`) instead of the `.example` templates.
+- Changed `/api/` proxy pass in `nginx/nginx.conf` from `http://backend:5000` to `http://backend` (using the declared upstream) to avoid configuration drift.
+- Minor security-note improvements in `docs/architecture.md`.
+
+**Files changed:** `docker-compose.yml`, `nginx/nginx.conf`, `docs/architecture.md`
+
+---
+
 ## [Unreleased] – 2026-04-05
 
 ### docs: sync Docker and architecture documentation with current runtime behavior

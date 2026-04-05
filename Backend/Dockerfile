@@ -22,12 +22,10 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 # Copy app source code
 COPY . .
 
-# Copy entrypoint
-COPY entrypoint.sh /entrypoint.sh
-RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Expose Flask dev port
 EXPOSE 5000
 
 # Default command
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
