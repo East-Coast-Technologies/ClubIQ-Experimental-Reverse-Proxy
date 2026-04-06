@@ -2,8 +2,9 @@
 set -e
 
 echo "Waiting for PostgreSQL to start..."
-while ! nc -z db 5432; do
-  sleep 1
+until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do
+  echo "PostgreSQL not ready yet, retrying in 2s..."
+  sleep 2
 done
 echo "PostgreSQL started!"
 

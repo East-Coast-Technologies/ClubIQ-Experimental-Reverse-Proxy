@@ -1,18 +1,25 @@
-from flask_restful import Resource, Api
 from flask import Blueprint
+from flask_restful import Api, Resource
 
-health_bp = Blueprint("health", __name__, url_prefix='/api/health')
+health_bp = Blueprint("health", __name__)
 api = Api(health_bp)
 
 class HealthResource(Resource):
     """
-    This checks the status of the db (healthy & running)
+    Backend liveness probe endpoint used by Docker Compose.
     """
+
     def get(self):
         return {
-            "message": "It feels good up here 😄"
-        }
-        
-        
-# Endpoint 
-api.add_resource(HealthResource, '/')
+            "status": "healthy",
+            "message": "Backend service is running",
+        }, 200
+
+
+api.add_resource(
+    HealthResource,
+    "/backend-health",
+    "/backend-health/",
+    "/api/backend-health",
+    "/api/backend-health/",
+)
